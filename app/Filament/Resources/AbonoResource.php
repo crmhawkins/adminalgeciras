@@ -4,8 +4,6 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\AbonoResource\Pages;
 use App\Models\Abono;
-use App\Models\Sector;
-use App\Models\Usuario;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -28,77 +26,86 @@ class AbonoResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('usuarioId')
-                    ->label('Usuario')
-                    ->relationship('usuario', 'nombre')
-                    ->searchable()
+                Forms\Components\TextInput::make('codigoAbonado')
+                    ->label('Nº Abonado')
+                    ->numeric(),
+                Forms\Components\TextInput::make('nombre')
+                    ->label('Nombre')
                     ->required(),
-                Forms\Components\Select::make('sectorId')
-                    ->label('Sector')
-                    ->relationship('sector', 'nombre')
+                Forms\Components\TextInput::make('apellidos')
+                    ->label('Apellidos')
                     ->required(),
-                Forms\Components\Select::make('asientoId')
-                    ->label('Asiento')
-                    ->relationship('asiento', 'numero')
-                    ->searchable(),
-                Forms\Components\TextInput::make('temporada')
-                    ->label('Temporada')
-                    ->required()
-                    ->maxLength(50),
-                Forms\Components\Select::make('estado')
-                    ->label('Estado')
-                    ->options([
-                        'activo' => 'Activo',
-                        'pendiente' => 'Pendiente',
-                        'cancelado' => 'Cancelado',
-                        'expirado' => 'Expirado',
-                    ])
-                    ->required(),
+                Forms\Components\TextInput::make('email')
+                    ->label('Email')
+                    ->email(),
+                Forms\Components\TextInput::make('telefono')
+                    ->label('Teléfono'),
+                Forms\Components\TextInput::make('dni')
+                    ->label('DNI'),
+                Forms\Components\DatePicker::make('fechaNacimiento')
+                    ->label('Fecha de nacimiento'),
+                Forms\Components\Select::make('genero')
+                    ->label('Género')
+                    ->options(['masculino' => 'Masculino', 'femenino' => 'Femenino']),
+                Forms\Components\TextInput::make('precio')
+                    ->label('Precio (€)')
+                    ->numeric(),
+                Forms\Components\DatePicker::make('fechaInicio')
+                    ->label('Inicio'),
+                Forms\Components\DatePicker::make('fechaFin')
+                    ->label('Fin'),
+                Forms\Components\Toggle::make('activo')
+                    ->label('Activo')
+                    ->default(true),
             ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultSort('codigoAbonado')
             ->columns([
-                Tables\Columns\TextColumn::make('usuario.nombre')
-                    ->label('Usuario')
+                Tables\Columns\TextColumn::make('codigoAbonado')
+                    ->label('Nº')
+                    ->sortable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('nombre')
+                    ->label('Nombre')
+                    ->sortable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('apellidos')
+                    ->label('Apellidos')
+                    ->sortable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('email')
+                    ->label('Email')
                     ->searchable()
+                    ->toggleable(),
+                Tables\Columns\IconColumn::make('activo')
+                    ->label('Activo')
+                    ->boolean()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('sector.nombre')
-                    ->label('Sector')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('asiento')
-                    ->label('Asiento')
-                    ->getStateUsing(fn ($record) => $record->asiento ? "Fila {$record->asiento->fila} - Nº {$record->asiento->numero}" : '-'),
-                Tables\Columns\TextColumn::make('temporada')
-                    ->label('Temporada')
-                    ->sortable(),
-                Tables\Columns\BadgeColumn::make('estado')
-                    ->label('Estado')
-                    ->colors([
-                        'success' => 'activo',
-                        'warning' => 'pendiente',
-                        'danger' => 'cancelado',
-                        'secondary' => 'expirado',
-                    ]),
-                Tables\Columns\TextColumn::make('createdAt')
-                    ->label('Creado')
-                    ->dateTime('d/m/Y H:i')
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('precio')
+                    ->label('Precio')
+                    ->money('EUR')
+                    ->sortable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('fechaInicio')
+                    ->label('Desde')
+                    ->date('d/m/Y')
+                    ->sortable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('fechaFin')
+                    ->label('Hasta')
+                    ->date('d/m/Y')
+                    ->sortable()
+                    ->toggleable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('estado')
+                Tables\Filters\TernaryFilter::make('activo')
                     ->label('Estado')
-                    ->options([
-                        'activo' => 'Activo',
-                        'pendiente' => 'Pendiente',
-                        'cancelado' => 'Cancelado',
-                        'expirado' => 'Expirado',
-                    ]),
-                Tables\Filters\SelectFilter::make('temporada')
-                    ->label('Temporada')
-                    ->options(fn () => Abono::query()->distinct()->pluck('temporada', 'temporada')->toArray()),
+                    ->trueLabel('Activos')
+                    ->falseLabel('Inactivos'),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
