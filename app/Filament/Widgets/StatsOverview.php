@@ -4,7 +4,6 @@ namespace App\Filament\Widgets;
 
 use App\Models\Abono;
 use App\Models\Asiento;
-use App\Models\Pago;
 use App\Models\Partido;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -13,10 +12,9 @@ class StatsOverview extends BaseWidget
 {
     protected function getStats(): array
     {
-        $totalAbonados = Abono::where('estado', 'activo')->count();
+        $totalAbonados = Abono::where('activo', true)->count();
         $ocupados = Asiento::where('estado', 'ocupado')->count();
         $disponibles = Asiento::where('estado', 'disponible')->count();
-        $ingresos = (float) Pago::where('estado', 'completado')->sum('monto');
         $proximoPartido = Partido::where('fecha', '>=', now()->toDateString())
             ->orderBy('fecha')
             ->orderBy('hora')
@@ -39,11 +37,6 @@ class StatsOverview extends BaseWidget
                 ->description($disponibles . ' disponibles')
                 ->descriptionIcon('heroicon-m-rectangle-stack')
                 ->color('warning'),
-
-            Stat::make('Ingresos Totales', '€ ' . number_format($ingresos, 2, ',', '.'))
-                ->description('Pagos completados')
-                ->descriptionIcon('heroicon-m-banknotes')
-                ->color('success'),
 
             Stat::make('Próximo Partido', $proximoTexto)
                 ->description($proximoFecha)
