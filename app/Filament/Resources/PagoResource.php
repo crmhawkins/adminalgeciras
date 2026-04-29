@@ -33,24 +33,30 @@ class PagoResource extends Resource
                 Tables\Columns\TextColumn::make('id')
                     ->label('ID')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('usuario.nombre')
-                    ->label('Usuario')
-                    ->searchable(),
+                Tables\Columns\TextColumn::make('tipo')
+                    ->label('Tipo')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'abono' => 'success',
+                        'entrada' => 'info',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('monto')
                     ->label('Monto')
                     ->money('EUR')
                     ->sortable(),
-                Tables\Columns\BadgeColumn::make('estado')
+                Tables\Columns\TextColumn::make('estado')
                     ->label('Estado')
-                    ->colors([
-                        'success' => 'completado',
-                        'warning' => 'pendiente',
-                        'danger' => 'fallido',
-                        'secondary' => 'reembolsado',
-                    ]),
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'completado' => 'success',
+                        'pendiente' => 'warning',
+                        'cancelado', 'expirado' => 'danger',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('stripeSessionId')
                     ->label('Stripe Session')
-                    ->limit(20)
+                    ->limit(24)
                     ->copyable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('createdAt')
@@ -65,8 +71,8 @@ class PagoResource extends Resource
                     ->options([
                         'completado' => 'Completado',
                         'pendiente' => 'Pendiente',
-                        'fallido' => 'Fallido',
-                        'reembolsado' => 'Reembolsado',
+                        'cancelado' => 'Cancelado',
+                        'expirado' => 'Expirado',
                     ]),
             ])
             ->actions([

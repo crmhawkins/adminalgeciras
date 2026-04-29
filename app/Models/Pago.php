@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Pago extends Model
 {
-    protected $table = 'pagos';
+    protected $table = 'pago_sessions';
     protected $primaryKey = 'id';
     public $timestamps = true;
     const CREATED_AT = 'createdAt';
