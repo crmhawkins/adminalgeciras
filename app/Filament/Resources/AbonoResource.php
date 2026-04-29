@@ -38,6 +38,10 @@ class AbonoResource extends Resource
                 Forms\Components\TextInput::make('email')
                     ->label('Email')
                     ->email(),
+                Forms\Components\TextInput::make('codigoAcceso')
+                    ->label('Código de Acceso')
+                    ->disabled()
+                    ->dehydrated(false),
                 Forms\Components\TextInput::make('telefono')
                     ->label('Teléfono'),
                 Forms\Components\TextInput::make('dni')
@@ -81,6 +85,12 @@ class AbonoResource extends Resource
                     ->label('Email')
                     ->searchable()
                     ->toggleable(),
+                Tables\Columns\TextColumn::make('codigoAcceso')
+                    ->label('Código Acceso')
+                    ->copyable()
+                    ->fontFamily('mono')
+                    ->badge()
+                    ->color('danger'),
                 Tables\Columns\IconColumn::make('activo')
                     ->label('Activo')
                     ->boolean()
