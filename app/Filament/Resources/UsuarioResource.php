@@ -79,13 +79,14 @@ class UsuarioResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('telefono')
                     ->label('Teléfono'),
-                Tables\Columns\BadgeColumn::make('role')
+                Tables\Columns\TextColumn::make('role')
                     ->label('Rol')
-                    ->colors([
-                        'danger' => 'admin',
-                        'success' => 'socio',
-                        'secondary' => 'usuario',
-                    ]),
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'admin' => 'danger',
+                        'socio' => 'success',
+                        default => 'gray',
+                    }),
                 Tables\Columns\IconColumn::make('activo')
                     ->label('Activo')
                     ->boolean(),

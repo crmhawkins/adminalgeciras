@@ -13,7 +13,7 @@ class Pago extends Model
     const CREATED_AT = 'createdAt';
     const UPDATED_AT = 'updatedAt';
 
-    protected $guarded = [];
+    protected $fillable = ['stripeSessionId', 'tipo', 'estado', 'datosCompra', 'monto', 'fechaExpiracion', 'usuarioId'];
 
     protected $casts = [
         'monto' => 'decimal:2',

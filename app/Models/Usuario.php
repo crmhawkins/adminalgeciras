@@ -13,7 +13,11 @@ class Usuario extends Model
     const CREATED_AT = 'createdAt';
     const UPDATED_AT = 'updatedAt';
 
-    protected $guarded = [];
+    protected $fillable = [
+        'nombre', 'email', 'password', 'dni', 'telefono',
+        'profileImage', 'role', 'activo', 'expoPushToken',
+        'resetToken', 'resetTokenExpira',
+    ];
     protected $hidden = ['password'];
 
     protected $casts = [

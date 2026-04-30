@@ -13,7 +13,7 @@ class Grada extends Model
     const CREATED_AT = 'createdAt';
     const UPDATED_AT = 'updatedAt';
 
-    protected $guarded = [];
+    protected $fillable = ['nombre', 'descripcion', 'imagen'];
 
     public function sectores(): HasMany
     {

@@ -13,7 +13,7 @@ class Asiento extends Model
     const CREATED_AT = 'createdAt';
     const UPDATED_AT = 'updatedAt';
 
-    protected $guarded = [];
+    protected $fillable = ['fila', 'numero', 'estado', 'sectorId', 'partidoId'];
 
     public function sector(): BelongsTo
     {

@@ -13,7 +13,12 @@ class Abono extends Model
     const CREATED_AT = 'createdAt';
     const UPDATED_AT = 'updatedAt';
 
-    protected $guarded = [];
+    protected $fillable = [
+        'fechaInicio', 'fechaFin', 'nombre', 'apellidos', 'genero', 'dni',
+        'fechaNacimiento', 'email', 'telefono', 'pais', 'provincia', 'localidad',
+        'domicilio', 'codigoPostal', 'usuarioId', 'asientoId', 'precio',
+        'activo', 'codigoAcceso', 'sectorId',
+    ];
 
     public function usuario(): BelongsTo
     {

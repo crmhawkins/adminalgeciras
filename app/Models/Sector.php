@@ -14,7 +14,7 @@ class Sector extends Model
     const CREATED_AT = 'createdAt';
     const UPDATED_AT = 'updatedAt';
 
-    protected $guarded = [];
+    protected $fillable = ['nombre', 'gradaId', 'capacidad', 'precio', 'imagen', 'activo'];
 
     protected $casts = [
         'precio' => 'decimal:2',
