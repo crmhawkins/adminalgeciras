@@ -41,4 +41,10 @@ return [
         'pass' => env('INTERNO_PASS'),
     ],
 
+    'wordpress' => [
+        'url'  => env('WORDPRESS_URL'),
+        'user' => env('WORDPRESS_USER', 'algeciras_admin'),
+        'pass' => env('WORDPRESS_PASS'),
+    ],
+
 ];

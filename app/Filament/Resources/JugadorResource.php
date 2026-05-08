@@ -9,6 +9,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Http;
 
 class JugadorResource extends Resource
 {
@@ -157,10 +158,123 @@ class JugadorResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('sync_wp')
+                    ->label('→ WP')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->requiresConfirmation()
+                    ->modalHeading('Sincronizar a WordPress')
+                    ->modalDescription('¿Enviar este jugador al sitio WordPress?')
+                    ->action(function ($record) {
+                        $wpUrl = config('services.wordpress.url', env('WORDPRESS_URL', 'http://wordpress-d4s4ogc48cocg0kog80w4skw.217.160.39.81.sslip.io'));
+                        $user  = config('services.wordpress.user', env('WORDPRESS_USER', 'algeciras_admin'));
+                        $pass  = config('services.wordpress.pass', env('WORDPRESS_PASS', ''));
+
+                        if (empty($pass)) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('WORDPRESS_PASS no configurado')
+                                ->danger()->send();
+                            return;
+                        }
+
+                        // Buscar si ya existe el jugador en WP por meta _sofascore_id
+                        $search = Http::withBasicAuth($user, $pass)
+                            ->get("$wpUrl/wp-json/wp/v2/jugador", [
+                                'meta_key'   => '_sofascore_id',
+                                'meta_value' => $record->sofascoreId,
+                                'per_page'   => 1,
+                            ]);
+
+                        $payload = [
+                            'title'  => $record->nombre,
+                            'status' => 'publish',
+                            'meta'   => [
+                                '_dorsal'           => (string) ($record->dorsal ?? ''),
+                                '_posicion'         => $record->posicion ?? '',
+                                '_sofascore_id'     => (string) ($record->sofascoreId ?? ''),
+                                '_fecha_nacimiento' => $record->fechaNacimiento ?? '',
+                                '_altura'           => $record->altura ?? '',
+                                '_peso'             => $record->peso ?? '',
+                                '_pais_flag'        => $record->pais ?? '',
+                            ],
+                        ];
+
+                        $existing = $search->json();
+                        if (!empty($existing)) {
+                            Http::withBasicAuth($user, $pass)
+                                ->post("$wpUrl/wp-json/wp/v2/jugador/{$existing[0]['id']}", $payload);
+                            $msg = "Jugador actualizado en WP (ID {$existing[0]['id']})";
+                        } else {
+                            $res = Http::withBasicAuth($user, $pass)
+                                ->post("$wpUrl/wp-json/wp/v2/jugador", $payload);
+                            $msg = "Jugador creado en WP (ID {$res->json('id')})";
+                        }
+
+                        \Filament\Notifications\Notification::make()
+                            ->title($msg)->success()->send();
+                    }),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('sync_wp_bulk')
+                        ->label('Sincronizar todos a WP')
+                        ->icon('heroicon-o-arrow-up-tray')
+                        ->requiresConfirmation()
+                        ->modalHeading('Sincronizar seleccionados a WordPress')
+                        ->modalDescription('¿Enviar los jugadores seleccionados al sitio WordPress?')
+                        ->action(function (\Illuminate\Support\Collection $records) {
+                            $wpUrl = config('services.wordpress.url', env('WORDPRESS_URL', 'http://wordpress-d4s4ogc48cocg0kog80w4skw.217.160.39.81.sslip.io'));
+                            $user  = config('services.wordpress.user', env('WORDPRESS_USER', 'algeciras_admin'));
+                            $pass  = config('services.wordpress.pass', env('WORDPRESS_PASS', ''));
+
+                            if (empty($pass)) {
+                                \Filament\Notifications\Notification::make()
+                                    ->title('WORDPRESS_PASS no configurado')
+                                    ->danger()->send();
+                                return;
+                            }
+
+                            $created = 0;
+                            $updated = 0;
+
+                            foreach ($records as $record) {
+                                $search = Http::withBasicAuth($user, $pass)
+                                    ->get("$wpUrl/wp-json/wp/v2/jugador", [
+                                        'meta_key'   => '_sofascore_id',
+                                        'meta_value' => $record->sofascoreId,
+                                        'per_page'   => 1,
+                                    ]);
+
+                                $payload = [
+                                    'title'  => $record->nombre,
+                                    'status' => 'publish',
+                                    'meta'   => [
+                                        '_dorsal'           => (string) ($record->dorsal ?? ''),
+                                        '_posicion'         => $record->posicion ?? '',
+                                        '_sofascore_id'     => (string) ($record->sofascoreId ?? ''),
+                                        '_fecha_nacimiento' => $record->fechaNacimiento ?? '',
+                                        '_altura'           => $record->altura ?? '',
+                                        '_peso'             => $record->peso ?? '',
+                                        '_pais_flag'        => $record->pais ?? '',
+                                    ],
+                                ];
+
+                                $existing = $search->json();
+                                if (!empty($existing)) {
+                                    Http::withBasicAuth($user, $pass)
+                                        ->post("$wpUrl/wp-json/wp/v2/jugador/{$existing[0]['id']}", $payload);
+                                    $updated++;
+                                } else {
+                                    Http::withBasicAuth($user, $pass)
+                                        ->post("$wpUrl/wp-json/wp/v2/jugador", $payload);
+                                    $created++;
+                                }
+                            }
+
+                            \Filament\Notifications\Notification::make()
+                                ->title("Sincronización completa: {$created} creados, {$updated} actualizados")
+                                ->success()->send();
+                        }),
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
