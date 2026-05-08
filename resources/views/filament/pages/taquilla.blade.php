@@ -148,7 +148,14 @@
                         @endif
                     </div>
                 @endif
-                <div class="mt-6">
+                <div class="mt-6 flex justify-center gap-3 flex-wrap">
+                    @if(isset($resultado['pagoId']))
+                    <a href="{{ route('ticket.generar', $resultado['pagoId']) }}" target="_blank">
+                        <x-filament::button color="warning">
+                            🖨️ Imprimir Ticket
+                        </x-filament::button>
+                    </a>
+                    @endif
                     <x-filament::button wire:click="nuevaVenta" color="primary">
                         + Nueva Venta
                     </x-filament::button>
