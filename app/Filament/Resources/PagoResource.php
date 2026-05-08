@@ -8,6 +8,9 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\DatePicker;
+use Illuminate\Database\Eloquent\Builder;
 
 class PagoResource extends Resource
 {
@@ -59,6 +62,10 @@ class PagoResource extends Resource
                     ->limit(24)
                     ->copyable()
                     ->searchable(),
+                Tables\Columns\TextColumn::make('usuario.email')
+                    ->label('Usuario Email')
+                    ->searchable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('createdAt')
                     ->label('Fecha')
                     ->dateTime('d/m/Y H:i')
@@ -74,9 +81,48 @@ class PagoResource extends Resource
                         'cancelado' => 'Cancelado',
                         'expirado' => 'Expirado',
                     ]),
+                Tables\Filters\SelectFilter::make('tipo')
+                    ->label('Tipo')
+                    ->options([
+                        'abono'   => 'Abono',
+                        'entrada' => 'Entrada',
+                    ]),
+                Filter::make('fecha_rango')
+                    ->form([
+                        DatePicker::make('desde')->label('Desde'),
+                        DatePicker::make('hasta')->label('Hasta'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when($data['desde'], fn ($q) => $q->whereDate('createdAt', '>=', $data['desde']))
+                            ->when($data['hasta'], fn ($q) => $q->whereDate('createdAt', '<=', $data['hasta']));
+                    }),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('export_csv_pagos')
+                        ->label('Exportar CSV')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->action(function ($records) {
+                            $csv = "ID,Usuario Email,Monto,Tipo,Estado,Fecha\n";
+                            foreach ($records as $pago) {
+                                $csv .= implode(',', [
+                                    $pago->id,
+                                    $pago->usuario?->email ?? '',
+                                    $pago->monto ?? '',
+                                    $pago->tipo ?? '',
+                                    $pago->estado ?? '',
+                                    $pago->createdAt ?? '',
+                                ]) . "\n";
+                            }
+                            return response()->streamDownload(fn () => print($csv), 'pagos.csv', [
+                                'Content-Type' => 'text/csv',
+                            ]);
+                        }),
+                ]),
             ]);
     }
 

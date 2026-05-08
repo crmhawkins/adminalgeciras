@@ -77,7 +77,22 @@ class PartidoResource extends Resource
                 Tables\Columns\TextColumn::make('hora')
                     ->label('Hora'),
                 Tables\Columns\TextColumn::make('estadio')
-                    ->label('Estadio'),
+                    ->label('Estadio')
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('resultado')
+                    ->label('Resultado')
+                    ->badge()
+                    ->color(fn ($state): string => $state ? 'success' : 'gray'),
+                Tables\Columns\TextColumn::make('jornada')
+                    ->label('Jornada')
+                    ->sortable(),
+                Tables\Columns\IconColumn::make('activo')
+                    ->label('Activo')
+                    ->boolean(),
+            ])
+            ->filters([
+                Tables\Filters\TernaryFilter::make('activo')
+                    ->label('Activo'),
             ])
             ->defaultSort('fecha', 'desc')
             ->actions([

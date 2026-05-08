@@ -3,12 +3,15 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\AbonoResource\Pages;
+use App\Mail\CodigoAccesoMail;
 use App\Models\Abono;
+use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Mail;
 
 class AbonoResource extends Resource
 {
@@ -111,6 +114,15 @@ class AbonoResource extends Resource
                     ->date('d/m/Y')
                     ->sortable()
                     ->toggleable(),
+                Tables\Columns\TextColumn::make('sector.nombre')
+                    ->label('Sector')
+                    ->sortable()
+                    ->searchable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('usuario.email')
+                    ->label('Email Usuario')
+                    ->searchable()
+                    ->toggleable(),
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('activo')
@@ -124,6 +136,45 @@ class AbonoResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('export_csv')
+                        ->label('Exportar CSV')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->action(function ($records) {
+                            $csv = "Nombre,Email,DNI,Sector,Asiento,Precio,Activo,FechaInicio\n";
+                            foreach ($records as $abono) {
+                                $csv .= implode(',', [
+                                    $abono->usuario?->nombre ?? $abono->nombre ?? '',
+                                    $abono->usuario?->email ?? $abono->email ?? '',
+                                    $abono->usuario?->dni ?? $abono->dni ?? '',
+                                    $abono->sector?->nombre ?? '',
+                                    $abono->asientoId ?? '',
+                                    $abono->precio ?? '',
+                                    $abono->activo ? 'Sí' : 'No',
+                                    $abono->fechaInicio ?? '',
+                                ]) . "\n";
+                            }
+                            return response()->streamDownload(fn () => print($csv), 'abonados.csv', [
+                                'Content-Type' => 'text/csv',
+                            ]);
+                        }),
+                    Tables\Actions\BulkAction::make('renovar')
+                        ->label('Renovar (+1 año)')
+                        ->icon('heroicon-o-arrow-path')
+                        ->requiresConfirmation()
+                        ->action(function ($records) {
+                            $records->each(function ($abono) {
+                                $abono->update([
+                                    'fechaFin' => Carbon::parse($abono->fechaFin)->addYear(),
+                                    'activo' => true,
+                                ]);
+                            });
+                        }),
+                    Tables\Actions\BulkAction::make('desactivar')
+                        ->label('Desactivar')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->action(fn ($records) => $records->each->update(['activo' => false])),
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
