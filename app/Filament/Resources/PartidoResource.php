@@ -46,6 +46,17 @@ class PartidoResource extends Resource
                     ->label('Estadio')
                     ->maxLength(255)
                     ->default('Nuevo Mirador'),
+                Forms\Components\TextInput::make('resultado')
+                    ->label('Resultado')
+                    ->placeholder('2-1')
+                    ->maxLength(10),
+                Forms\Components\TextInput::make('jornada')
+                    ->label('Jornada')
+                    ->numeric()
+                    ->minValue(1),
+                Forms\Components\Toggle::make('activo')
+                    ->label('Partido activo')
+                    ->default(false),
             ]);
     }
 
@@ -71,6 +82,7 @@ class PartidoResource extends Resource
             ->defaultSort('fecha', 'desc')
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

@@ -13,6 +13,7 @@ class StatsOverview extends BaseWidget
     protected function getStats(): array
     {
         $totalAbonados = Abono::where('activo', true)->count();
+        // Conteo global histórico — no filtrado por partido activo
         $ocupados = Asiento::where('estado', 'ocupado')->count();
         $disponibles = Asiento::where('estado', 'disponible')->count();
         $proximoPartido = Partido::where('fecha', '>=', now()->toDateString())

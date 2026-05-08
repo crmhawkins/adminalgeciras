@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'backend' => [
+        'url'  => env('BACKEND_URL', 'https://backend-algeciras.hawkins.es'),
+        'user' => env('INTERNO_USER'),
+        'pass' => env('INTERNO_PASS'),
+    ],
+
 ];

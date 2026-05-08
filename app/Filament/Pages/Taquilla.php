@@ -55,10 +55,12 @@ class Taquilla extends Page implements HasForms
 
     private function backendAuth(): array
     {
-        return [
-            env('INTERNO_USER', 'admin'),
-            env('INTERNO_PASS', ''),
-        ];
+        $user = config('services.backend.user');
+        $pass = config('services.backend.pass');
+        if (empty($user) || empty($pass)) {
+            throw new \RuntimeException('Backend credentials not configured');
+        }
+        return [$user, $pass];
     }
 
     public function buscarDisponibilidad(): void
@@ -96,9 +98,28 @@ class Taquilla extends Page implements HasForms
 
     public function confirmarVenta(): void
     {
+        if (empty($this->asientoId)) {
+            Notification::make()
+                ->title('Selecciona un asiento primero')
+                ->warning()
+                ->send();
+            return;
+        }
+
         if (!$this->nombre || !$this->metodoPago) {
             Notification::make()->title('Nombre y método de pago son obligatorios')->warning()->send();
             return;
+        }
+
+        if ($this->precioManual !== null) {
+            $allowedEmails = config('admin.allowed_emails');
+            if (empty($allowedEmails) || !in_array(auth()->user()->email, $allowedEmails)) {
+                Notification::make()
+                    ->title('Sin permisos para precio manual')
+                    ->danger()
+                    ->send();
+                return;
+            }
         }
 
         $url = $this->backendUrl() . '/api/interno/taquilla/' . $this->tipoVenta;

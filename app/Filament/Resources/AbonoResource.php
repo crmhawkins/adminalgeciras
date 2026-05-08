@@ -28,7 +28,8 @@ class AbonoResource extends Resource
             ->schema([
                 Forms\Components\TextInput::make('codigoAbonado')
                     ->label('Nº Abonado')
-                    ->numeric(),
+                    ->numeric()
+                    ->required(),
                 Forms\Components\TextInput::make('nombre')
                     ->label('Nombre')
                     ->required(),
