@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 use Filament\Pages\Page;
 use App\Models\Pago;
 use Carbon\Carbon;
+use Livewire\Attributes\Computed;
 
 class Reportes extends Page
 {
@@ -23,7 +24,8 @@ class Reportes extends Page
         $this->fechaHasta = Carbon::now()->format('Y-m-d');
     }
 
-    public function getStatsProperty(): array
+    #[Computed]
+    public function stats(): array
     {
         $desde = $this->fechaDesde . ' 00:00:00';
         $hasta = $this->fechaHasta . ' 23:59:59';
@@ -43,7 +45,8 @@ class Reportes extends Page
         ];
     }
 
-    public function getPorDiaProperty(): array
+    #[Computed]
+    public function porDia(): array
     {
         return Pago::where('estado', 'completado')
             ->whereBetween('createdAt', [
@@ -104,26 +107,28 @@ class Reportes extends Page
             ->orderBy('createdAt', 'desc')
             ->get();
 
-        $csv = "Fecha,Usuario,Email,Tipo,Monto,Estado\n";
-        foreach ($pagos as $p) {
-            $fecha = $p->createdAt instanceof \Carbon\Carbon
-                ? $p->createdAt->format('d/m/Y H:i')
-                : \Carbon\Carbon::parse($p->createdAt)->format('d/m/Y H:i');
-
-            $csv .= implode(',', [
-                $fecha,
-                '"' . ($p->usuario?->nombre ?? 'N/A') . '"',
-                $p->usuario?->email ?? 'N/A',
-                $p->tipo,
-                number_format($p->monto, 2),
-                $p->estado,
-            ]) . "\n";
-        }
-
         return response()->streamDownload(
-            fn () => print($csv),
+            function () use ($pagos) {
+                $handle = fopen('php://output', 'w');
+                fputs($handle, "\xEF\xBB\xBF"); // UTF-8 BOM for Excel
+                fputcsv($handle, ['Fecha', 'Usuario', 'Email', 'Tipo', 'Monto', 'Estado']);
+                foreach ($pagos as $p) {
+                    $fecha = $p->createdAt instanceof \Carbon\Carbon
+                        ? $p->createdAt->format('d/m/Y H:i')
+                        : \Carbon\Carbon::parse($p->createdAt)->format('d/m/Y H:i');
+                    fputcsv($handle, [
+                        $fecha,
+                        $p->usuario?->nombre ?? 'N/A',
+                        $p->usuario?->email ?? 'N/A',
+                        $p->tipo,
+                        number_format($p->monto, 2),
+                        $p->estado,
+                    ]);
+                }
+                fclose($handle);
+            },
             'ventas_' . $this->fechaDesde . '_' . $this->fechaHasta . '.csv',
-            ['Content-Type' => 'text/csv']
+            ['Content-Type' => 'text/csv; charset=UTF-8']
         );
     }
 }

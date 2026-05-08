@@ -26,7 +26,27 @@ class PagoResource extends Resource
 
     public static function form(Form $form): Form
     {
-        return $form->schema([]);
+        return $form->schema([
+            \Filament\Forms\Components\TextInput::make('usuario.email')
+                ->label('Email usuario')
+                ->disabled(),
+            \Filament\Forms\Components\TextInput::make('tipo')
+                ->label('Tipo')
+                ->disabled(),
+            \Filament\Forms\Components\TextInput::make('estado')
+                ->label('Estado')
+                ->disabled(),
+            \Filament\Forms\Components\TextInput::make('monto')
+                ->label('Monto (€)')
+                ->disabled(),
+            \Filament\Forms\Components\Textarea::make('datosCompra')
+                ->label('Datos de compra')
+                ->disabled()
+                ->columnSpanFull(),
+            \Filament\Forms\Components\DateTimePicker::make('createdAt')
+                ->label('Fecha')
+                ->disabled(),
+        ]);
     }
 
     public static function table(Table $table): Table
@@ -107,20 +127,22 @@ class PagoResource extends Resource
                         ->label('Exportar CSV')
                         ->icon('heroicon-o-arrow-down-tray')
                         ->action(function ($records) {
-                            $csv = "ID,Usuario Email,Monto,Tipo,Estado,Fecha\n";
-                            foreach ($records as $pago) {
-                                $csv .= implode(',', [
-                                    $pago->id,
-                                    $pago->usuario?->email ?? '',
-                                    $pago->monto ?? '',
-                                    $pago->tipo ?? '',
-                                    $pago->estado ?? '',
-                                    $pago->createdAt ?? '',
-                                ]) . "\n";
-                            }
-                            return response()->streamDownload(fn () => print($csv), 'pagos.csv', [
-                                'Content-Type' => 'text/csv',
-                            ]);
+                            return response()->streamDownload(function () use ($records) {
+                                $handle = fopen('php://output', 'w');
+                                fputs($handle, "\xEF\xBB\xBF"); // UTF-8 BOM for Excel
+                                fputcsv($handle, ['ID', 'Usuario Email', 'Monto', 'Tipo', 'Estado', 'Fecha']);
+                                foreach ($records as $pago) {
+                                    fputcsv($handle, [
+                                        $pago->id,
+                                        $pago->usuario?->email ?? '',
+                                        $pago->monto ?? '',
+                                        $pago->tipo ?? '',
+                                        $pago->estado ?? '',
+                                        $pago->createdAt ?? '',
+                                    ]);
+                                }
+                                fclose($handle);
+                            }, 'pagos.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
                         }),
                 ]),
             ]);
@@ -145,6 +167,7 @@ class PagoResource extends Resource
     {
         return [
             'index' => Pages\ListPagos::route('/'),
+            'view'  => Pages\ViewPago::route('/{record}'),
         ];
     }
 }

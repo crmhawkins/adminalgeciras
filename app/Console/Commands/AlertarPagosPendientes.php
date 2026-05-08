@@ -20,7 +20,8 @@ class AlertarPagosPendientes extends Command
             ->count();
 
         if ($pendientes > 0) {
-            $admins = User::all();
+            $allowedEmails = config('admin.allowed_emails', []);
+            $admins = User::whereIn('email', $allowedEmails)->get();
 
             foreach ($admins as $admin) {
                 Notification::make()

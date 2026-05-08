@@ -139,7 +139,7 @@ class Taquilla extends Page implements HasForms
             if ($this->precioManual !== null) $body['precioManual'] = $this->precioManual;
         } else {
             $body['asientoId']   = $this->asientoId;
-            $body['precio']      = $this->precioManual ?? 100;
+            $body['precio']      = $this->precioManual ?? config('algeciras.precio_abono', 100);
         }
 
         try {
