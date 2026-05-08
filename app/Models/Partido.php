@@ -15,6 +15,7 @@ class Partido extends Model
     protected $fillable = ['equipoLocal', 'equipoVisitante', 'fecha', 'hora', 'competicion', 'jornada', 'estadio', 'activo'];
 
     protected $casts = [
-        'fecha' => 'date',
+        'fecha'  => 'date',
+        'activo' => 'boolean',
     ];
 }

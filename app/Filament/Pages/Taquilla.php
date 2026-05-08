@@ -111,6 +111,15 @@ class Taquilla extends Page implements HasForms
             return;
         }
 
+        if ($this->email && !filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
+            Notification::make()->title('Email inválido')->warning()->send();
+            return;
+        }
+        if ($this->dni && !preg_match('/^[0-9]{8}[A-Z]$/', strtoupper($this->dni))) {
+            Notification::make()->title('DNI inválido (formato: 12345678A)')->warning()->send();
+            return;
+        }
+
         if ($this->precioManual !== null) {
             $allowedEmails = config('admin.allowed_emails');
             if (empty($allowedEmails) || !in_array(auth()->user()->email, $allowedEmails)) {

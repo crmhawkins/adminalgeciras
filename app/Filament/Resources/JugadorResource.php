@@ -166,8 +166,8 @@ class JugadorResource extends Resource
                     ->modalDescription('¿Enviar este jugador al sitio WordPress?')
                     ->action(function ($record) {
                         $wpUrl = config('services.wordpress.url', env('WORDPRESS_URL', 'http://wordpress-d4s4ogc48cocg0kog80w4skw.217.160.39.81.sslip.io'));
-                        $user  = config('services.wordpress.user', env('WORDPRESS_USER', 'algeciras_admin'));
-                        $pass  = config('services.wordpress.pass', env('WORDPRESS_PASS', ''));
+                        $user  = config('services.wordpress.user', env('WORDPRESS_USER'));
+                        $pass  = config('services.wordpress.pass', env('WORDPRESS_PASS'));
 
                         if (empty($pass)) {
                             \Filament\Notifications\Notification::make()
@@ -177,7 +177,7 @@ class JugadorResource extends Resource
                         }
 
                         // Buscar si ya existe el jugador en WP por meta _sofascore_id
-                        $search = Http::withBasicAuth($user, $pass)
+                        $search = Http::timeout(5)->withBasicAuth($user, $pass)
                             ->get("$wpUrl/wp-json/wp/v2/jugador", [
                                 'meta_key'   => '_sofascore_id',
                                 'meta_value' => $record->sofascoreId,
@@ -200,11 +200,11 @@ class JugadorResource extends Resource
 
                         $existing = $search->json();
                         if (!empty($existing)) {
-                            Http::withBasicAuth($user, $pass)
+                            Http::timeout(5)->withBasicAuth($user, $pass)
                                 ->post("$wpUrl/wp-json/wp/v2/jugador/{$existing[0]['id']}", $payload);
                             $msg = "Jugador actualizado en WP (ID {$existing[0]['id']})";
                         } else {
-                            $res = Http::withBasicAuth($user, $pass)
+                            $res = Http::timeout(5)->withBasicAuth($user, $pass)
                                 ->post("$wpUrl/wp-json/wp/v2/jugador", $payload);
                             $msg = "Jugador creado en WP (ID {$res->json('id')})";
                         }
@@ -224,8 +224,8 @@ class JugadorResource extends Resource
                         ->modalDescription('¿Enviar los jugadores seleccionados al sitio WordPress?')
                         ->action(function (\Illuminate\Support\Collection $records) {
                             $wpUrl = config('services.wordpress.url', env('WORDPRESS_URL', 'http://wordpress-d4s4ogc48cocg0kog80w4skw.217.160.39.81.sslip.io'));
-                            $user  = config('services.wordpress.user', env('WORDPRESS_USER', 'algeciras_admin'));
-                            $pass  = config('services.wordpress.pass', env('WORDPRESS_PASS', ''));
+                            $user  = config('services.wordpress.user', env('WORDPRESS_USER'));
+                            $pass  = config('services.wordpress.pass', env('WORDPRESS_PASS'));
 
                             if (empty($pass)) {
                                 \Filament\Notifications\Notification::make()
@@ -238,7 +238,7 @@ class JugadorResource extends Resource
                             $updated = 0;
 
                             foreach ($records as $record) {
-                                $search = Http::withBasicAuth($user, $pass)
+                                $search = Http::timeout(5)->withBasicAuth($user, $pass)
                                     ->get("$wpUrl/wp-json/wp/v2/jugador", [
                                         'meta_key'   => '_sofascore_id',
                                         'meta_value' => $record->sofascoreId,
@@ -261,11 +261,11 @@ class JugadorResource extends Resource
 
                                 $existing = $search->json();
                                 if (!empty($existing)) {
-                                    Http::withBasicAuth($user, $pass)
+                                    Http::timeout(5)->withBasicAuth($user, $pass)
                                         ->post("$wpUrl/wp-json/wp/v2/jugador/{$existing[0]['id']}", $payload);
                                     $updated++;
                                 } else {
-                                    Http::withBasicAuth($user, $pass)
+                                    Http::timeout(5)->withBasicAuth($user, $pass)
                                         ->post("$wpUrl/wp-json/wp/v2/jugador", $payload);
                                     $created++;
                                 }

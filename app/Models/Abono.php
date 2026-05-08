@@ -20,6 +20,13 @@ class Abono extends Model
         'activo', 'codigoAcceso', 'sectorId',
     ];
 
+    protected $casts = [
+        'fechaInicio'     => 'date',
+        'fechaFin'        => 'date',
+        'fechaNacimiento' => 'date',
+        'activo'          => 'boolean',
+    ];
+
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(Usuario::class, 'usuarioId');

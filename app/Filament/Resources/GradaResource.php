@@ -9,6 +9,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class GradaResource extends Resource
 {
@@ -25,6 +26,11 @@ class GradaResource extends Resource
     protected static ?string $navigationGroup = 'Estadio';
 
     protected static ?int $navigationSort = 1;
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->withCount('sectores');
+    }
 
     public static function form(Form $form): Form
     {

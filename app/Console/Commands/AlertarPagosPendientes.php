@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\Pago;
-use App\Models\User;
+use App\Models\User; // Using User (not Usuario): only User extends Authenticatable, required for Filament DB notifications
 use Carbon\Carbon;
 use Filament\Notifications\Notification;
 

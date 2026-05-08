@@ -16,7 +16,8 @@ class Pago extends Model
     protected $fillable = ['stripeSessionId', 'tipo', 'estado', 'datosCompra', 'monto', 'fechaExpiracion', 'usuarioId', 'usuarioEmail'];
 
     protected $casts = [
-        'monto' => 'decimal:2',
+        'monto'       => 'decimal:2',
+        'datosCompra' => 'array',
     ];
 
     public function usuario(): BelongsTo

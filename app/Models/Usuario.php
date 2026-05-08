@@ -16,7 +16,7 @@ class Usuario extends Model
     protected $fillable = [
         'nombre', 'email', 'password', 'dni', 'telefono',
         'profileImage', 'role', 'activo', 'expoPushToken',
-        'resetToken', 'resetTokenExpira',
+        // resetToken and resetTokenExpira excluded from fillable (SEC-05: prevent mass assignment)
     ];
     protected $hidden = ['password'];
 

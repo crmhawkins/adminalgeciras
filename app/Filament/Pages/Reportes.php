@@ -30,18 +30,25 @@ class Reportes extends Page
         $desde = $this->fechaDesde . ' 00:00:00';
         $hasta = $this->fechaHasta . ' 23:59:59';
 
-        $query = Pago::where('estado', 'completado')
-            ->whereBetween('createdAt', [$desde, $hasta]);
+        $data = \App\Models\Pago::where('estado', 'completado')
+            ->whereBetween('createdAt', [$desde, $hasta])
+            ->selectRaw('
+                SUM(monto) as total,
+                COUNT(*) as count,
+                SUM(CASE WHEN tipo = "abono" THEN monto ELSE 0 END) as total_abonos,
+                SUM(CASE WHEN tipo = "entrada" THEN monto ELSE 0 END) as total_entradas
+            ')
+            ->first();
 
-        $total = (clone $query)->sum('monto');
-        $count = (clone $query)->count();
+        $total = (float) ($data->total ?? 0);
+        $count = (int) ($data->count ?? 0);
 
         return [
-            'total_recaudado'  => $total,
-            'total_abonos'     => (clone $query)->where('tipo', 'abono')->sum('monto'),
-            'total_entradas'   => (clone $query)->where('tipo', 'entrada')->sum('monto'),
-            'num_transacciones'=> $count,
-            'ticket_medio'     => $count > 0 ? ($total / $count) : 0,
+            'total_recaudado'   => $total,
+            'total_abonos'      => (float) ($data->total_abonos ?? 0),
+            'total_entradas'    => (float) ($data->total_entradas ?? 0),
+            'num_transacciones' => $count,
+            'ticket_medio'      => $count > 0 ? ($total / $count) : 0,
         ];
     }
 

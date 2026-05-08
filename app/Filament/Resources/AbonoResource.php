@@ -11,6 +11,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Mail;
 
 class AbonoResource extends Resource
@@ -24,6 +25,11 @@ class AbonoResource extends Resource
     protected static ?string $modelLabel = 'Abono';
 
     protected static ?string $pluralModelLabel = 'Abonos';
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['sector', 'usuario']);
+    }
 
     public static function form(Form $form): Form
     {
@@ -140,22 +146,27 @@ class AbonoResource extends Resource
                         ->label('Exportar CSV')
                         ->icon('heroicon-o-arrow-down-tray')
                         ->action(function ($records) {
-                            $csv = "Nombre,Email,DNI,Sector,Asiento,Precio,Activo,FechaInicio\n";
-                            foreach ($records as $abono) {
-                                $csv .= implode(',', [
-                                    $abono->usuario?->nombre ?? $abono->nombre ?? '',
-                                    $abono->usuario?->email ?? $abono->email ?? '',
-                                    $abono->usuario?->dni ?? $abono->dni ?? '',
-                                    $abono->sector?->nombre ?? '',
-                                    $abono->asientoId ?? '',
-                                    $abono->precio ?? '',
-                                    $abono->activo ? 'Sí' : 'No',
-                                    $abono->fechaInicio ?? '',
-                                ]) . "\n";
-                            }
-                            return response()->streamDownload(fn () => print($csv), 'abonados.csv', [
-                                'Content-Type' => 'text/csv',
-                            ]);
+                            $ids = $records->pluck('id');
+                            $abonos = \App\Models\Abono::whereIn('id', $ids)->with(['usuario', 'sector'])->get();
+                            return response()->streamDownload(function () use ($abonos) {
+                                $handle = fopen('php://output', 'w');
+                                fputs($handle, "\xEF\xBB\xBF");
+                                fputcsv($handle, ['ID', 'Titular', 'Email', 'DNI', 'Sector', 'Asiento', 'Estado', 'Fecha Inicio', 'Fecha Fin']);
+                                foreach ($abonos as $abono) {
+                                    fputcsv($handle, [
+                                        $abono->id,
+                                        $abono->nombre . ' ' . $abono->apellidos,
+                                        $abono->usuario?->email ?? '',
+                                        $abono->dni ?? '',
+                                        $abono->sector?->nombre ?? '',
+                                        $abono->asientoId ?? '',
+                                        $abono->activo ? 'Activo' : 'Inactivo',
+                                        $abono->fechaInicio ?? '',
+                                        $abono->fechaFin ?? '',
+                                    ]);
+                                }
+                                fclose($handle);
+                            }, 'abonos_export.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
                         }),
                     Tables\Actions\BulkAction::make('renovar')
                         ->label('Renovar (+1 año)')
